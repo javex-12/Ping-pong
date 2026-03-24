@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sunset Odyssey: 3D Pong</title>
+    <meta name="description" content="A 3D Pong game with leveling and customization.">
+    <meta name="theme-color" content="#1a0a2e">
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="js/game.js" defer></script>
+</head>
+<body>
+
+    <div id="ui-layer">
+        <div class="hud-top">
+            <div class="stat-card">
+                <span class="stat-label">Level</span>
+                <span id="level-val" class="stat-val">1</span>
+                <div class="level-progress-bar"><div id="level-fill"></div></div>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">Score</span>
+                <span id="score-val" class="stat-val">0 - 0</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">Credits</span>
+                <span id="credits-val" class="stat-val">0</span>
+            </div>
+        </div>
+        <button id="shop-btn">Marketplace</button>
+    </div>
+
+    <div id="menu-overlay">
+        <div class="card">
+            <h1 id="menu-title">SUNSET ODYSSEY</h1>
+            <p id="level-description">Reach Level 50 to become a Legend.</p>
+            <div class="btn-group">
+                <button id="start-btn">Start Match</button>
+                <button id="install-btn" style="display: none;">Install App</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="shop-overlay" style="display: none;">
+        <div class="card shop-card">
+            <h2>CUSTOMIZE</h2>
+            <div class="shop-grid" id="shop-container"></div>
+            <button id="close-shop">Return</button>
+        </div>
+    </div>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').then(reg => {
+                    console.log('SW registered:', reg);
+                }).catch(err => {
+                    console.log('SW registration failed:', err);
+                });
+            });
+        }
+    </script>
+</body>
+</html>

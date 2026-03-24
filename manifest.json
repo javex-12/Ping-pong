@@ -1,0 +1,16 @@
+{
+  "name": "Sunset Odyssey: 3D Pong",
+  "short_name": "SunsetPong",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#1a0a2e",
+  "theme_color": "#ffaa00",
+  "description": "A 3D Pong experience with leveling and customization.",
+  "icons": [
+    {
+      "src": "assets/icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "512x512"
+    }
+  ]
+}
