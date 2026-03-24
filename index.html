@@ -3,129 +3,101 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Neon Pong: Cyber League</title>
-    <meta name="description" content="Rise through the ranks of the Cyber League in this high-octane 3D arcade game.">
-    <meta name="theme-color" content="#000000">
-    <link rel="manifest" href="manifest.json">
+    <title>PRO PONG 2026</title>
     <link rel="stylesheet" href="css/style.css">
-    <!-- Preload Font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700&family=Syncopate:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
-    <!-- 1. LOADING SCREEN -->
     <div id="loading-screen" class="screen">
         <div class="loader-content">
-            <div class="glitch-text" data-text="NEON PONG">NEON PONG</div>
+            <h1 class="logo">PRO<span>PONG</span></h1>
             <div class="loader-bar"><div id="loader-fill"></div></div>
-            <p id="loading-text">INITIALIZING SYSTEMS...</p>
-        </div>
-        <div id="server-warning" style="display:none; color: #ff4444; margin-top: 20px; font-size: 0.8rem; text-align: center;">
-            MODERN BROWSERS REQUIRE A LOCAL SERVER.<br>
-            Please use "npx serve" or "Live Server" extension.
+            <p id="loading-text">CALIBRATING OPTICS...</p>
         </div>
     </div>
 
-    <!-- 2. HOME SCREEN -->
     <div id="home-screen" class="screen hidden">
-        <div class="hero-content">
-            <h1 class="main-title">CYBER<br>LEAGUE</h1>
-            <p class="subtitle">THE ULTRA-PADDLE CHAMPIONSHIP</p>
-            <div class="menu-buttons">
-                <button id="btn-campaign" class="cyber-btn"><span>CAMPAIGN</span></button>
-                <button id="btn-quick" class="cyber-btn"><span>QUICK MATCH</span></button>
-                <button id="btn-shop" class="cyber-btn"><span>ARMORY</span></button>
+        <div class="main-nav">
+            <h1 class="title">PRO PONG</h1>
+            <div class="nav-links">
+                <button id="btn-campaign" class="nav-item">CAMPAIGN</button>
+                <button id="btn-shop" class="nav-item">EQUIPMENT</button>
+                <button id="btn-settings" class="nav-item">SETTINGS</button>
             </div>
         </div>
-        <div class="version-tag">v1.0.0 | PROD</div>
     </div>
 
-    <!-- 3. CAMPAIGN MAP -->
     <div id="campaign-screen" class="screen hidden">
-        <div class="header-bar">
-            <button class="back-btn" data-target="home-screen">← BACK</button>
-            <h2>SECTOR SELECT</h2>
+        <div class="glass-header">
+            <button class="back-btn" data-target="home-screen">EXIT</button>
+            <h2>TOURNAMENT SELECT</h2>
         </div>
-        <div class="carousel-container">
-            <div id="level-carousel" class="carousel">
-                <!-- Levels injected by JS -->
-            </div>
-        </div>
-        <div id="level-details">
-            <h3 id="lvl-name">SECTOR 1</h3>
-            <p id="lvl-desc">The Slums - Opponent: Rusty</p>
-            <button id="btn-start-level" class="action-btn">ENGAGE</button>
+        <div id="level-carousel" class="carousel"></div>
+        <div id="level-details" class="details-panel">
+            <h3 id="lvl-name">...</h3>
+            <p id="lvl-desc">...</p>
+            <button id="btn-start-level" class="play-btn">START MATCH</button>
         </div>
     </div>
 
-    <!-- 4. SHOP / ARMORY -->
     <div id="shop-screen" class="screen hidden">
-        <div class="header-bar">
-            <button class="back-btn" data-target="home-screen">← BACK</button>
+        <div class="glass-header">
+            <button class="back-btn" data-target="home-screen">EXIT</button>
             <h2>ARMORY</h2>
-            <div class="currency-display"><span id="shop-credits">0</span> CR</div>
+            <div class="credits"><span id="shop-credits">0</span> CR</div>
         </div>
-        <div class="shop-layout">
-            <div class="shop-list" id="shop-list">
-                <!-- Items injected JS -->
-            </div>
-            <div class="item-preview">
-                <h3 id="shop-item-name">SELECT ITEM</h3>
-                <div class="stat-bars">
-                    <div class="stat-row"><label>SPEED</label><div class="bar-bg"><div class="bar-fill" id="stat-speed"></div></div></div>
-                    <div class="stat-row"><label>CONTROL</label><div class="bar-bg"><div class="bar-fill" id="stat-control"></div></div></div>
-                    <div class="stat-row"><label>POWER</label><div class="bar-bg"><div class="bar-fill" id="stat-power"></div></div></div>
+        <div class="shop-content">
+            <div id="shop-list" class="item-grid"></div>
+            <div class="item-stats">
+                <h3 id="shop-item-name">SELECT GEAR</h3>
+                <div class="stat-group">
+                    <div class="stat-label">SPEED</div>
+                    <div class="stat-track"><div id="stat-speed" class="stat-fill"></div></div>
                 </div>
-                <button id="btn-buy-equip" class="action-btn" disabled>LOCKED</button>
+                <div class="stat-group">
+                    <div class="stat-label">CONTROL</div>
+                    <div class="stat-track"><div id="stat-control" class="stat-fill"></div></div>
+                </div>
+                <button id="btn-buy-equip" class="action-btn" disabled>SELECT</button>
             </div>
         </div>
     </div>
 
-    <!-- 5. IN-GAME HUD -->
     <div id="game-ui" class="screen hidden">
-        <div class="hud-top">
-            <div class="score-board">
-                <div class="score-p" id="score-p">0</div>
-                <div class="timer">VS</div>
-                <div class="score-e" id="score-e">0</div>
+        <div class="hud">
+            <div class="score-card">
+                <span id="score-p">0</span>
+                <span class="divider">/</span>
+                <span id="score-e">0</span>
             </div>
+            <button id="btn-pause">PAUSE</button>
         </div>
-        <div id="match-message" class="match-overlay hidden">
-            <h2 id="msg-title">GOAL</h2>
-        </div>
-        <div id="game-controls-hint">DRAG TO MOVE</div>
     </div>
 
-    <!-- 6. POST MATCH -->
+    <div id="pause-overlay" class="screen hidden">
+        <div class="pause-card">
+            <h1>PAUSED</h1>
+            <button id="btn-resume" class="nav-item">RESUME</button>
+            <button class="back-btn" data-target="home-screen" style="position:static">QUIT MATCH</button>
+        </div>
+    </div>
+
     <div id="result-screen" class="screen hidden">
         <div class="result-card">
-            <h1 id="result-title">VICTORY</h1>
-            <div class="rewards">
-                <div class="reward-row"><span>XP EARNED</span><span id="res-xp">+100</span></div>
-                <div class="reward-row"><span>CREDITS</span><span id="res-cr">+50</span></div>
+            <h1 id="result-title">MATCH END</h1>
+            <div class="reward-box">
+                <div>XP <span id="res-xp">+0</span></div>
+                <div>CR <span id="res-cr">+0</span></div>
             </div>
-            <button id="btn-continue" class="action-btn">CONTINUE</button>
+            <button id="btn-continue" class="play-btn">CONTINUE</button>
         </div>
     </div>
 
-    <!-- CANVAS CONTAINER -->
     <div id="canvas-container"></div>
 
-    <!-- MODULE ENTRY -->
     <script type="module" src="js/main.js"></script>
-    
-    <script>
-        // Protocol check
-        if (location.protocol === 'file:') {
-            document.getElementById('server-warning').style.display = 'block';
-            document.getElementById('loading-text').innerText = "ERROR: ACCESS DENIED (LOCAL FILE)";
-        }
-        
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js').catch(console.error);
-        }
-    </script>
 </body>
 </html>

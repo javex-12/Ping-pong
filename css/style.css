@@ -1,183 +1,127 @@
 :root {
-    --primary: #00f2ff;
-    --primary-glow: rgba(0, 242, 255, 0.4);
-    --secondary: #ff0055;
-    --secondary-glow: rgba(255, 0, 85, 0.4);
-    --bg-deep: #050510;
-    --glass-panel: rgba(20, 25, 40, 0.75);
-    --glass-border: 1px solid rgba(255, 255, 255, 0.15);
-    --font-head: 'Orbitron', sans-serif;
-    --font-body: 'Rajdhani', sans-serif;
+    --bg-dark: #0a0b0d;
+    --acc-primary: #f2f2f2; /* White metal */
+    --acc-secondary: #ff3344; /* High-perf Red */
+    --acc-tertiary: #00ccff; /* Tech Blue */
+    --glass: rgba(20, 25, 30, 0.85);
+    --border: 1px solid rgba(255, 255, 255, 0.1);
+    --font-nav: 'Syncopate', sans-serif;
+    --font-main: 'Inter', sans-serif;
 }
 
-/* Base Reset & Layout */
 html, body {
-    margin: 0; padding: 0; height: 100%; width: 100%;
-    overflow: hidden; background-color: var(--bg-deep);
-    font-family: var(--font-body); color: white;
-    touch-action: none; user-select: none; -webkit-user-select: none;
+    margin: 0; padding: 0; width: 100%; height: 100%;
+    overflow: hidden; background: var(--bg-dark);
+    font-family: var(--font-main); color: white;
+    touch-action: none; user-select: none;
 }
 
 #canvas-container {
     position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;
 }
 
-/* Screen Management */
 .screen {
     position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    opacity: 1; transition: opacity 0.4s ease, transform 0.4s ease;
+    transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .screen.hidden {
-    opacity: 0; pointer-events: none; transform: scale(0.95);
-    display: none !important; /* Force hide for layout calc */
+    opacity: 0; pointer-events: none;
+    display: none !important;
 }
 
-/* Components */
-.glass-panel {
-    background: var(--glass-panel);
-    backdrop-filter: blur(15px);
-    -webkit-backdrop-filter: blur(15px);
-    border: var(--glass-border);
-    border-radius: 20px;
-    padding: 30px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-}
-
-.cyber-btn {
-    background: rgba(0, 242, 255, 0.1);
-    border: 1px solid var(--primary);
-    color: var(--primary);
-    font-family: var(--font-head);
-    font-size: 1.2rem;
-    padding: 16px 32px;
-    margin: 10px;
-    cursor: pointer;
-    clip-path: polygon(10% 0, 100% 0, 100% 70%, 90% 100%, 0 100%, 0 30%);
-    transition: all 0.2s ease;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    width: 280px;
-    text-align: center;
-}
-
-.cyber-btn:active {
-    transform: scale(0.96);
-    background: var(--primary);
-    color: #000;
-    box-shadow: 0 0 25px var(--primary-glow);
-}
-
-.back-btn {
-    position: absolute; top: 20px; left: 20px;
-    background: none; border: none; color: #888;
-    font-family: var(--font-head); font-size: 1rem;
-    cursor: pointer; padding: 10px; z-index: 20;
-}
-
-/* Specific Screens */
 /* 1. Loading */
 #loading-screen { background: #000; z-index: 100; }
-.glitch-text {
-    font-family: var(--font-head); font-size: 3rem; font-weight: 900;
-    text-shadow: 2px 2px var(--secondary), -2px -2px var(--primary);
-    animation: glitch 2s infinite alternate-reverse;
+.logo { 
+    font-family: var(--font-nav); font-size: 3rem; font-weight: 700; letter-spacing: 10px;
 }
-.loader-bar {
-    width: 200px; height: 4px; background: #333; margin: 20px auto;
-    border-radius: 2px; overflow: hidden;
-}
-#loader-fill {
-    width: 0%; height: 100%; background: var(--primary);
-    box-shadow: 0 0 10px var(--primary); transition: width 0.2s;
-}
+.logo span { font-weight: 300; opacity: 0.5; }
+.loader-bar { width: 250px; height: 2px; background: #222; margin: 20px auto; overflow: hidden; }
+#loader-fill { width: 0%; height: 100%; background: #fff; transition: width 0.1s; }
 
-/* 2. Home */
-#home-screen { background: rgba(0,0,0,0.4); }
-.hero-title {
-    font-size: 4.5rem; line-height: 0.9; margin-bottom: 10px;
-    font-family: var(--font-head);
-    background: linear-gradient(to right, #fff, var(--primary));
+/* 2. Main Nav */
+.main-nav { text-align: center; }
+.title { 
+    font-family: var(--font-nav); font-size: 4rem; letter-spacing: 15px; margin-bottom: 60px;
+    background: linear-gradient(180deg, #fff 0%, #888 100%);
     -webkit-background-clip: text; -webkit-text-fill-color: transparent;
 }
-.hero-sub { color: #888; letter-spacing: 4px; margin-bottom: 40px; font-size: 0.9rem; }
+.nav-links { display: flex; flex-direction: column; gap: 15px; }
+.nav-item {
+    background: none; border: none; color: #888;
+    font-family: var(--font-nav); font-size: 1.2rem;
+    padding: 15px 40px; cursor: pointer; transition: 0.2s;
+    letter-spacing: 5px;
+}
+.nav-item:hover, .nav-item:active {
+    color: #fff; transform: scale(1.05);
+}
 
-/* 3. Campaign */
-#campaign-screen { justify-content: flex-start; padding-top: 80px; }
-.carousel-container {
-    width: 100%; overflow-x: auto; display: flex;
-    padding: 20px 40px; gap: 20px; scroll-behavior: smooth;
-    -webkit-overflow-scrolling: touch; /* Momentum scroll */
+/* 3. Headers */
+.glass-header {
+    position: absolute; top: 0; width: 100%; height: 80px;
+    display: flex; align-items: center; padding: 0 40px;
+    background: rgba(0,0,0,0.4); backdrop-filter: blur(10px);
+    border-bottom: var(--border); box-sizing: border-box;
+}
+.glass-header h2 { font-family: var(--font-nav); font-size: 0.9rem; letter-spacing: 3px; }
+.back-btn { 
+    background: none; border: none; color: #555; 
+    font-family: var(--font-nav); cursor: pointer;
+}
+.back-btn:hover { color: #fff; }
+
+/* 4. Carousel */
+.carousel {
+    display: flex; gap: 30px; width: 100%; padding: 40px;
+    overflow-x: auto; scroll-snap-type: x mandatory;
 }
 .level-card {
-    min-width: 220px; height: 320px;
-    background: rgba(20,20,30,0.8);
-    border: 1px solid #333; border-radius: 15px;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    transition: 0.3s; opacity: 0.6; transform: scale(0.9);
+    min-width: 250px; height: 350px;
+    background: rgba(255,255,255,0.02); border: var(--border);
+    border-radius: 4px; display: flex; align-items: center; justify-content: center;
+    scroll-snap-align: center; transition: 0.3s;
 }
-.level-card.active {
-    opacity: 1; transform: scale(1);
-    border-color: var(--primary);
-    box-shadow: 0 0 30px rgba(0, 242, 255, 0.2);
+.level-card.active { background: rgba(255,255,255,0.05); border-color: #fff; }
+
+/* 5. HUD */
+.hud {
+    position: absolute; top: 0; width: 100%; display: flex; justify-content: space-between;
+    padding: 30px 40px; box-sizing: border-box; align-items: center;
 }
-.level-card.locked { opacity: 0.3; filter: grayscale(1); pointer-events: none; }
-#level-details {
-    margin-top: 20px; text-align: center;
-    background: rgba(0,0,0,0.6); padding: 20px; border-radius: 15px;
-    backdrop-filter: blur(10px); width: 90%; max-width: 400px;
+.score-card { font-family: var(--font-nav); font-size: 3rem; color: #fff; }
+.score-card .divider { opacity: 0.2; margin: 0 10px; }
+#btn-pause {
+    background: none; border: 1px solid rgba(255,255,255,0.2); color: #fff;
+    padding: 10px 20px; font-family: var(--font-nav); font-size: 0.7rem; cursor: pointer;
+    border-radius: 20px;
 }
 
-/* 4. Shop */
-#shop-screen { justify-content: flex-start; padding-top: 80px; }
-.shop-grid {
-    display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;
-    width: 100%; padding: 0 20px; max-height: 60vh; overflow-y: auto;
+/* 6. Shop Content */
+.shop-content {
+    display: flex; width: 100%; height: 100%; padding-top: 80px;
 }
-.shop-item {
-    background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px;
-    border: 1px solid #333; text-align: center; cursor: pointer;
-}
-.shop-item.selected { border-color: var(--primary); background: rgba(0, 242, 255, 0.1); }
-.shop-item.owned { border-color: #444; }
-.shop-item.owned .price { color: #0f0; }
+.item-grid { flex: 1; padding: 40px; display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; }
+.item-stats { width: 350px; border-left: var(--border); background: rgba(0,0,0,0.2); padding: 40px; }
+.stat-group { margin-bottom: 25px; }
+.stat-label { font-size: 0.7rem; color: #555; letter-spacing: 2px; margin-bottom: 10px; }
+.stat-track { height: 2px; background: #222; width: 100%; }
+.stat-fill { height: 100%; background: #fff; width: 0%; transition: width 0.3s; }
 
-/* 5. Game HUD */
-#game-ui { pointer-events: none; justify-content: space-between; padding: 20px 0; }
-.hud-top {
-    display: flex; gap: 30px; align-items: center;
-    background: rgba(0,0,0,0.5); padding: 10px 30px; border-radius: 30px;
-    border: 1px solid rgba(255,255,255,0.1);
-    backdrop-filter: blur(5px);
-}
-.score { font-size: 2.5rem; font-family: var(--font-head); font-weight: bold; }
-.score.p1 { color: var(--primary); text-shadow: 0 0 10px var(--primary-glow); }
-.score.p2 { color: var(--secondary); text-shadow: 0 0 10px var(--secondary-glow); }
-
-#touch-hint {
-    position: absolute; bottom: 100px; width: 100%; text-align: center;
-    color: rgba(255,255,255,0.3); font-size: 0.8rem; letter-spacing: 2px;
-    animation: pulse 2s infinite; pointer-events: none;
+.play-btn {
+    background: #fff; color: #000; border: none; padding: 20px 60px;
+    font-family: var(--font-nav); font-weight: 700; letter-spacing: 5px;
+    cursor: pointer; margin-top: 40px; width: 100%;
 }
 
-/* Animations */
-@keyframes glitch {
-    0% { transform: skew(0deg); }
-    20% { transform: skew(-2deg); }
-    40% { transform: skew(2deg); }
-    100% { transform: skew(0deg); }
+.pause-card {
+    background: rgba(0,0,0,0.9); padding: 60px; border: var(--border); text-align: center;
 }
-@keyframes pulse {
-    0% { opacity: 0.2; }
-    50% { opacity: 0.6; }
-    100% { opacity: 0.2; }
-}
+.pause-card h1 { font-family: var(--font-nav); letter-spacing: 20px; margin-bottom: 40px; }
 
-/* Mobile Tweaks */
-@media (max-width: 600px) {
-    .hero-title { font-size: 3rem; }
-    .cyber-btn { width: 90%; padding: 14px; }
-    .level-card { min-width: 180px; height: 260px; }
-    #level-details { width: 95%; }
+@media (max-width: 768px) {
+    .title { font-size: 2.5rem; letter-spacing: 8px; }
+    .shop-content { flex-direction: column; }
+    .item-stats { width: 100%; border-left: none; border-top: var(--border); }
 }

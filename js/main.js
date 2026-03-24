@@ -1,9 +1,9 @@
-// main.js - 2026 Edition
+// main.js - PRO PONG 2026 Edition
 import { Graphics } from './graphics.js';
 import { Physics } from './physics.js';
 import { UI } from './ui.js';
 import { AudioSynth } from './audio.js';
-import { ITEMS, CAMPAIGN, INITIAL_STATE, ENVIRONMENTS } from './data.js';
+import { ITEMS, CAMPAIGN, INITIAL_STATE } from './data.js';
 
 class Game {
     constructor() {
@@ -11,11 +11,13 @@ class Game {
         this.ui = new UI();
         this.audio = new AudioSynth();
         this.graphics = new Graphics(this.ui.canvas);
-        this.physics = new Physics(24, 48); // Slightly wider field
+        this.physics = new Physics(26, 48); // Field size
         
-        this.loopId = null;
         this.lastTime = 0;
         this.currentLevel = null;
+        this.isPaused = false;
+        
+        // Touch state
         this.touchStartX = 0;
         this.paddleStartX = 0;
         
@@ -23,30 +25,24 @@ class Game {
     }
 
     init() {
-        // Fake Loading Sequence
+        // High-end loading sequence
         let progress = 0;
         const interval = setInterval(() => {
             progress += 5 + Math.random() * 10;
             if(progress >= 100) {
                 progress = 100;
                 clearInterval(interval);
-                setTimeout(() => this.setupHome(), 500);
+                setTimeout(() => this.ui.show('home'), 800);
             }
             this.ui.updateLoader(progress);
-        }, 100);
+        }, 80);
 
         this.setupEvents();
         this.loop(0);
     }
 
-    setupHome() {
-        this.ui.show('home');
-        this.graphics.setEnvironment('cyber_city'); // Default background
-        this.audio.playSelect();
-    }
-
     setupEvents() {
-        // 1. Navigation
+        // Navigation
         document.getElementById('btn-campaign').onclick = () => {
             this.audio.playSelect();
             this.ui.show('campaign');
@@ -55,15 +51,10 @@ class Game {
                 this.ui.updateLevelInfo(lvl);
                 this.audio.playSelect();
             });
-            // Auto-select latest
+            // Select latest
             const latest = CAMPAIGN[Math.min(this.state.campaignProgress, CAMPAIGN.length-1)];
             this.ui.updateLevelInfo(latest);
             this.currentLevel = latest;
-        };
-
-        document.getElementById('btn-quick').onclick = () => {
-            this.audio.playSelect();
-            this.startMatch(CAMPAIGN[0]);
         };
 
         document.getElementById('btn-shop').onclick = () => {
@@ -75,45 +66,48 @@ class Game {
         document.querySelectorAll('.back-btn').forEach(btn => {
             btn.onclick = () => {
                 this.audio.playSelect();
+                this.isPaused = false;
+                this.state.matchActive = false;
                 this.ui.show(btn.dataset.target);
             };
         });
 
-        // 2. Input Handling (Relative Touch)
-        const handleMove = (x, isRelative, startX) => {
-            if (!this.state.matchActive) return;
-            
-            if (isRelative) {
-                const delta = (x - startX) * 0.08; // Sensitivity
-                this.physics.p1.x = Math.max(Math.min(this.paddleStartX + delta, 10), -10);
-            } else {
-                // Mouse fallback (Absolute)
-                const normX = ((x / window.innerWidth) * 2 - 1) * 10;
-                this.physics.p1.x = Math.max(Math.min(normX, 10), -10);
-            }
-            
-            if (this.pPaddleMesh) this.pPaddleMesh.position.x = this.physics.p1.x;
+        // Pause / Resume
+        document.getElementById('btn-pause').onclick = () => {
+            this.isPaused = true;
+            this.audio.playPause();
+            document.getElementById('pause-overlay').classList.remove('hidden');
         };
 
-        // Touch
+        document.getElementById('btn-resume').onclick = () => {
+            this.isPaused = false;
+            this.audio.resumeAudio();
+            document.getElementById('pause-overlay').classList.add('hidden');
+        };
+
+        // Touch Interaction (Relative)
         window.addEventListener('touchstart', (e) => {
-            if (!this.state.matchActive) return;
+            if (!this.state.matchActive || this.isPaused) return;
             this.touchStartX = e.touches[0].clientX;
             this.paddleStartX = this.physics.p1.x;
         }, { passive: false });
 
         window.addEventListener('touchmove', (e) => {
-            if (!this.state.matchActive) return;
+            if (!this.state.matchActive || this.isPaused) return;
             e.preventDefault();
-            handleMove(e.touches[0].clientX, true, this.touchStartX);
+            const delta = (e.touches[0].clientX - this.touchStartX) * 0.08;
+            this.physics.p1.x = Math.max(Math.min(this.paddleStartX + delta, 11), -11);
+            if (this.pPaddleMesh) this.pPaddleMesh.position.x = this.physics.p1.x;
         }, { passive: false });
 
-        // Mouse
+        // Mouse Support
         window.addEventListener('mousemove', (e) => {
-            handleMove(e.clientX, false, 0);
+            if (!this.state.matchActive || this.isPaused) return;
+            const x = ((e.clientX / window.innerWidth) * 2 - 1) * 11;
+            this.physics.p1.x = Math.max(Math.min(x, 11), -11);
+            if (this.pPaddleMesh) this.pPaddleMesh.position.x = this.physics.p1.x;
         });
         
-        // Expose start match
         window.startMatch = () => {
             if(this.currentLevel) this.startMatch(this.currentLevel);
         };
@@ -125,7 +119,7 @@ class Game {
                 if (this.state.credits >= item.price) {
                     this.state.credits -= item.price;
                     this.state.inventory.push(item.id);
-                    this.audio.playPowerUp();
+                    this.audio.playSelect();
                     this.saveState();
                     this.renderShop();
                 }
@@ -143,18 +137,15 @@ class Game {
     startMatch(levelData) {
         this.currentLevel = levelData;
         this.state.matchActive = true;
+        this.isPaused = false;
         this.pScore = 0;
         this.eScore = 0;
         
-        // 1. Setup Environment
-        this.graphics.setEnvironment(levelData.env || 'cyber_city');
-        
-        // 2. Reset Physics
-        this.physics.resetBall(0.35); // Base speed
+        this.physics.resetBall(0.35);
         this.physics.p1.x = 0;
         this.physics.p2.x = 0;
 
-        // 3. Clear & Rebuild Scene
+        // Scene Prep
         if (this.pPaddleMesh) this.graphics.scene.remove(this.pPaddleMesh);
         if (this.aiPaddleMesh) this.graphics.scene.remove(this.aiPaddleMesh);
         if (this.ballMesh) this.graphics.scene.remove(this.ballMesh);
@@ -162,63 +153,53 @@ class Game {
         const pItem = ITEMS.find(i => i.id === this.state.equipped.paddle);
         const bItem = ITEMS.find(i => i.id === this.state.equipped.ball);
         
-        this.pPaddleMesh = this.graphics.createPaddle(pItem.color, true);
+        this.pPaddleMesh = this.graphics.createPaddle(pItem.color);
         this.pPaddleMesh.position.z = this.physics.p1.z;
         
-        this.aiPaddleMesh = this.graphics.createPaddle(levelData.color, false);
+        this.aiPaddleMesh = this.graphics.createPaddle(levelData.color);
         this.aiPaddleMesh.position.z = this.physics.p2.z;
         
         this.ballMesh = this.graphics.createBall(bItem.color);
         
-        // 4. UI Transition
         this.ui.show('game');
         this.ui.updateHUD(0, 0);
-        this.ui.showMatchMessage('READY');
-        
-        setTimeout(() => this.ui.showMatchMessage('ENGAGE'), 1500);
     }
 
     loop(timestamp) {
         const dt = (timestamp - this.lastTime) / 1000;
         this.lastTime = timestamp;
 
-        if (this.state.matchActive && dt < 0.1) {
-            // AI Logic
+        if (this.state.matchActive && !this.isPaused && dt < 0.1) {
+            // AI
             const aiSpeed = this.currentLevel.speed;
-            const targetX = this.physics.ball.x;
-            this.physics.p2.x += (targetX - this.physics.p2.x) * aiSpeed;
-            this.physics.p2.x = Math.max(Math.min(this.physics.p2.x, 10), -10);
+            this.physics.p2.x += (this.physics.ball.x - this.physics.p2.x) * aiSpeed;
+            this.physics.p2.x = Math.max(Math.min(this.physics.p2.x, 11), -11);
             this.aiPaddleMesh.position.x = this.physics.p2.x;
 
-            // Physics Update
+            // Physics
             const result = this.physics.update(dt);
             
-            // Sync Visuals
+            // Sync
             this.ballMesh.position.x = this.physics.ball.x;
             this.ballMesh.position.z = this.physics.ball.z;
             this.ballMesh.rotation.x += this.physics.ball.vz;
             this.ballMesh.rotation.z -= this.physics.ball.vx;
 
-            // Collision Effects
             if (result) {
                 if (result === 'wall') {
                     this.audio.playWall();
-                    this.graphics.shakeCamera(0.2);
+                    this.graphics.shakeCamera(0.15);
                 } else if (result === 'p1' || result === 'p2') {
                     this.audio.playHit();
-                    this.graphics.spawnImpact(this.ballMesh.position, result === 'p1' ? 0x00f2ff : 0xff0055);
-                    this.graphics.shakeCamera(0.6);
-                    if (navigator.vibrate) navigator.vibrate(20); // Haptics
+                    this.graphics.spawnImpact(this.ballMesh.position, result === 'p1' ? 0xffffff : 0x888888);
+                    this.graphics.shakeCamera(0.3);
                 } else if (result.startsWith('score')) {
-                    const isPlayer = result === 'score_p2'; // Top side check
+                    const playerPoint = result === 'score_p2';
+                    if (playerPoint) this.pScore++; else this.eScore++;
                     
-                    if (isPlayer) this.pScore++; else this.eScore++;
-                    
-                    this.audio.playScore(isPlayer);
-                    this.ui.showMatchMessage(isPlayer ? 'GOAL!' : 'BREACH!');
+                    this.audio.playScore(playerPoint);
                     this.ui.updateHUD(this.pScore, this.eScore);
-                    this.graphics.shakeCamera(1.0);
-                    if (navigator.vibrate) navigator.vibrate(50);
+                    this.graphics.shakeCamera(0.8);
                     
                     if (this.pScore >= 5 || this.eScore >= 5) {
                         this.endMatch(this.pScore >= 5);
@@ -238,48 +219,36 @@ class Game {
         setTimeout(() => {
             this.ui.show('result');
             const title = document.getElementById('result-title');
-            const xpEl = document.getElementById('res-xp');
-            const crEl = document.getElementById('res-cr');
+            title.innerText = victory ? "VICTORY" : "DEFEAT";
+            title.style.color = victory ? "#fff" : "#ff4444";
+            
+            const reward = this.currentLevel.winReward;
+            document.getElementById('res-xp').innerText = "+" + (victory ? reward.xp : 10);
+            document.getElementById('res-cr').innerText = "+" + (victory ? reward.cr : 5);
             
             if (victory) {
-                title.innerText = "VICTORY";
-                title.style.color = "#00f2ff";
-                this.audio.playPowerUp();
-                
-                // Rewards
-                const reward = this.currentLevel.winReward;
-                xpEl.innerText = "+" + reward.xp;
-                crEl.innerText = "+" + reward.cr;
-                
                 this.state.xp += reward.xp;
                 this.state.credits += reward.cr;
                 if (this.currentLevel.id > this.state.campaignProgress) {
                     this.state.campaignProgress = this.currentLevel.id;
                 }
-                this.saveState();
-            } else {
-                title.innerText = "DEFEAT";
-                title.style.color = "#ff0055";
-                xpEl.innerText = "+10";
-                crEl.innerText = "+5";
-                this.state.credits += 5;
-                this.saveState();
             }
+            this.saveState();
 
             document.getElementById('btn-continue').onclick = () => {
                 this.audio.playSelect();
-                this.setupHome();
+                this.ui.show('home');
             };
         }, 1000);
     }
 
     loadState() {
-        const s = localStorage.getItem('neon_pong_save');
+        const s = localStorage.getItem('pro_pong_save');
         return s ? { ...INITIAL_STATE, ...JSON.parse(s) } : { ...INITIAL_STATE };
     }
 
     saveState() {
-        localStorage.setItem('neon_pong_save', JSON.stringify(this.state));
+        localStorage.setItem('pro_pong_save', JSON.stringify(this.state));
     }
 }
 
