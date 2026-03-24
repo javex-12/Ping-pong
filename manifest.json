@@ -1,11 +1,11 @@
 {
-  "name": "Sunset Odyssey: 3D Pong",
-  "short_name": "SunsetPong",
+  "name": "Neon Pong: Cyber League",
+  "short_name": "NeonPong",
   "start_url": "index.html",
   "display": "standalone",
-  "background_color": "#1a0a2e",
-  "theme_color": "#ffaa00",
-  "description": "A 3D Pong experience with leveling and customization.",
+  "background_color": "#0a0a0f",
+  "theme_color": "#00f2ff",
+  "description": "Rise through the ranks of the Cyber League in this high-octane 3D arcade game.",
   "icons": [
     {
       "src": "assets/icon.svg",

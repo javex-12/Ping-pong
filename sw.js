@@ -1,12 +1,17 @@
-const CACHE_NAME = 'sunset-odyssey-v1';
+const CACHE_NAME = 'neon-pong-v2';
 const ASSETS = [
   './',
   './index.html',
   './css/style.css',
-  './js/game.js',
+  './js/main.js',
+  './js/graphics.js',
+  './js/physics.js',
+  './js/ui.js',
+  './js/audio.js',
+  './js/data.js',
   './manifest.json',
   './assets/icon.svg',
-  'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js'
+  'https://unpkg.com/three@0.128.0/build/three.module.js'
 ];
 
 self.addEventListener('install', (e) => {
