@@ -1,4 +1,4 @@
-const CACHE_NAME = 'neon-pong-v2';
+const CACHE_NAME = 'pro-pong-v1';
 const ASSETS = [
   './',
   './index.html',
@@ -10,11 +10,11 @@ const ASSETS = [
   './js/audio.js',
   './js/data.js',
   './manifest.json',
-  './assets/icon.svg',
   'https://unpkg.com/three@0.128.0/build/three.module.js'
 ];
 
 self.addEventListener('install', (e) => {
+  self.skipWaiting(); // Force activation
   e.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(ASSETS);
@@ -27,11 +27,15 @@ self.addEventListener('activate', (e) => {
     caches.keys().then((keys) => {
       return Promise.all(
         keys.map((key) => {
-          if (key !== CACHE_NAME) return caches.delete(key);
+          if (key !== CACHE_NAME) {
+             console.log('Clearing old cache:', key);
+             return caches.delete(key);
+          }
         })
       );
     })
   );
+  return self.clients.claim();
 });
 
 self.addEventListener('fetch', (e) => {

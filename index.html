@@ -99,5 +99,21 @@
     <div id="canvas-container"></div>
 
     <script type="module" src="js/main.js"></script>
+    <script>
+        // Force unregister old service workers to break out of cache
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                for(let registration of registrations) {
+                    registration.unregister();
+                }
+            });
+        }
+        
+        // Auto-reload on first visit to this version if cache is suspected
+        if (!localStorage.getItem('pro_v1_loaded')) {
+            localStorage.setItem('pro_v1_loaded', 'true');
+            setTimeout(() => location.reload(), 100);
+        }
+    </script>
 </body>
 </html>
