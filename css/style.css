@@ -10,11 +10,16 @@
     --shadow: 0 0 15px rgba(255, 170, 0, 0.4);
 }
 
-body {
+html, body {
     margin: 0;
     padding: 0;
+    height: 100%;
+    width: 100%;
     overflow: hidden;
     background-color: var(--bg-dark);
+}
+
+body {
     font-family: var(--font-body);
     color: white;
     touch-action: none;
@@ -44,13 +49,16 @@ body {
 .screen.hidden {
     opacity: 0;
     pointer-events: none;
-    display: none;
+    display: none !important;
 }
 
 /* --- LOADING SCREEN --- */
 #loading-screen {
     background: #000;
     z-index: 100;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
 }
 
 .loader-content {

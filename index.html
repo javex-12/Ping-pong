@@ -16,11 +16,15 @@
 <body>
 
     <!-- 1. LOADING SCREEN -->
-    <div id="loading-screen">
+    <div id="loading-screen" class="screen">
         <div class="loader-content">
             <div class="glitch-text" data-text="NEON PONG">NEON PONG</div>
             <div class="loader-bar"><div id="loader-fill"></div></div>
             <p id="loading-text">INITIALIZING SYSTEMS...</p>
+        </div>
+        <div id="server-warning" style="display:none; color: #ff4444; margin-top: 20px; font-size: 0.8rem; text-align: center;">
+            MODERN BROWSERS REQUIRE A LOCAL SERVER.<br>
+            Please use "npx serve" or "Live Server" extension.
         </div>
     </div>
 
@@ -112,8 +116,13 @@
     <!-- MODULE ENTRY -->
     <script type="module" src="js/main.js"></script>
     
-    <!-- SERVICE WORKER -->
     <script>
+        // Protocol check
+        if (location.protocol === 'file:') {
+            document.getElementById('server-warning').style.display = 'block';
+            document.getElementById('loading-text').innerText = "ERROR: ACCESS DENIED (LOCAL FILE)";
+        }
+        
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js').catch(console.error);
         }
