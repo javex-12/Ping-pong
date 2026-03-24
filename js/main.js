@@ -1,9 +1,9 @@
-// main.js - Game Entry Point
+// main.js - 2026 Edition
 import { Graphics } from './graphics.js';
 import { Physics } from './physics.js';
 import { UI } from './ui.js';
 import { AudioSynth } from './audio.js';
-import { ITEMS, CAMPAIGN, INITIAL_STATE } from './data.js';
+import { ITEMS, CAMPAIGN, INITIAL_STATE, ENVIRONMENTS } from './data.js';
 
 class Game {
     constructor() {
@@ -11,27 +11,29 @@ class Game {
         this.ui = new UI();
         this.audio = new AudioSynth();
         this.graphics = new Graphics(this.ui.canvas);
-        this.physics = new Physics(22, 44); // Field size
+        this.physics = new Physics(24, 48); // Slightly wider field
         
         this.loopId = null;
         this.lastTime = 0;
         this.currentLevel = null;
+        this.touchStartX = 0;
+        this.paddleStartX = 0;
         
         this.init();
     }
 
     init() {
-        // Fake Loading
+        // Fake Loading Sequence
         let progress = 0;
         const interval = setInterval(() => {
-            progress += Math.random() * 10;
+            progress += 5 + Math.random() * 10;
             if(progress >= 100) {
                 progress = 100;
                 clearInterval(interval);
-                this.setupHome();
+                setTimeout(() => this.setupHome(), 500);
             }
             this.ui.updateLoader(progress);
-        }, 200);
+        }, 100);
 
         this.setupEvents();
         this.loop(0);
@@ -39,26 +41,29 @@ class Game {
 
     setupHome() {
         this.ui.show('home');
-        this.audio.playSelect(); // Initial sound
+        this.graphics.setEnvironment('cyber_city'); // Default background
+        this.audio.playSelect();
     }
 
     setupEvents() {
-        // Menu Navigation
+        // 1. Navigation
         document.getElementById('btn-campaign').onclick = () => {
             this.audio.playSelect();
             this.ui.show('campaign');
             this.ui.renderCarousel(CAMPAIGN, this.state.campaignProgress, (lvl) => {
+                this.currentLevel = lvl;
                 this.ui.updateLevelInfo(lvl);
                 this.audio.playSelect();
             });
-            // Select first available by default
-            const current = CAMPAIGN[Math.min(this.state.campaignProgress, CAMPAIGN.length-1)];
-            this.ui.updateLevelInfo(current);
+            // Auto-select latest
+            const latest = CAMPAIGN[Math.min(this.state.campaignProgress, CAMPAIGN.length-1)];
+            this.ui.updateLevelInfo(latest);
+            this.currentLevel = latest;
         };
 
         document.getElementById('btn-quick').onclick = () => {
             this.audio.playSelect();
-            this.startMatch(CAMPAIGN[0]); // Quick match is just level 1
+            this.startMatch(CAMPAIGN[0]);
         };
 
         document.getElementById('btn-shop').onclick = () => {
@@ -74,30 +79,44 @@ class Game {
             };
         });
 
-        // Shop Actions
-        const buyBtn = document.getElementById('btn-buy-equip');
-        // Logic handled in UI render callback
-        
-        // Game Input
-        window.addEventListener('mousemove', (e) => {
-            if (this.state.matchActive) {
-                const x = ((e.clientX / window.innerWidth) * 2 - 1) * (this.physics.field.w/2 - 2);
-                this.physics.p1.x = Math.max(Math.min(x, 9), -9);
-                if (this.pPaddleMesh) this.pPaddleMesh.position.x = this.physics.p1.x;
+        // 2. Input Handling (Relative Touch)
+        const handleMove = (x, isRelative, startX) => {
+            if (!this.state.matchActive) return;
+            
+            if (isRelative) {
+                const delta = (x - startX) * 0.08; // Sensitivity
+                this.physics.p1.x = Math.max(Math.min(this.paddleStartX + delta, 10), -10);
+            } else {
+                // Mouse fallback (Absolute)
+                const normX = ((x / window.innerWidth) * 2 - 1) * 10;
+                this.physics.p1.x = Math.max(Math.min(normX, 10), -10);
             }
-        });
+            
+            if (this.pPaddleMesh) this.pPaddleMesh.position.x = this.physics.p1.x;
+        };
+
+        // Touch
+        window.addEventListener('touchstart', (e) => {
+            if (!this.state.matchActive) return;
+            this.touchStartX = e.touches[0].clientX;
+            this.paddleStartX = this.physics.p1.x;
+        }, { passive: false });
 
         window.addEventListener('touchmove', (e) => {
-            if (this.state.matchActive) {
-                e.preventDefault();
-                const x = ((e.touches[0].clientX / window.innerWidth) * 2 - 1) * (this.physics.field.w/2 - 2);
-                this.physics.p1.x = Math.max(Math.min(x, 9), -9);
-                if (this.pPaddleMesh) this.pPaddleMesh.position.x = this.physics.p1.x;
-            }
+            if (!this.state.matchActive) return;
+            e.preventDefault();
+            handleMove(e.touches[0].clientX, true, this.touchStartX);
         }, { passive: false });
+
+        // Mouse
+        window.addEventListener('mousemove', (e) => {
+            handleMove(e.clientX, false, 0);
+        });
         
-        // Expose start match to window for UI
-        window.startMatch = (lvl) => this.startMatch(lvl);
+        // Expose start match
+        window.startMatch = () => {
+            if(this.currentLevel) this.startMatch(this.currentLevel);
+        };
     }
 
     renderShop() {
@@ -127,33 +146,36 @@ class Game {
         this.pScore = 0;
         this.eScore = 0;
         
-        // Reset Physics
-        this.physics.resetBall(0.3); // Base speed
+        // 1. Setup Environment
+        this.graphics.setEnvironment(levelData.env || 'cyber_city');
         
-        // Setup 3D Scene
-        // Clear old meshes
+        // 2. Reset Physics
+        this.physics.resetBall(0.35); // Base speed
+        this.physics.p1.x = 0;
+        this.physics.p2.x = 0;
+
+        // 3. Clear & Rebuild Scene
         if (this.pPaddleMesh) this.graphics.scene.remove(this.pPaddleMesh);
         if (this.aiPaddleMesh) this.graphics.scene.remove(this.aiPaddleMesh);
         if (this.ballMesh) this.graphics.scene.remove(this.ballMesh);
 
-        // Get Player Stats
         const pItem = ITEMS.find(i => i.id === this.state.equipped.paddle);
         const bItem = ITEMS.find(i => i.id === this.state.equipped.ball);
         
-        // Create Meshes
-        this.pPaddleMesh = this.graphics.createPaddle(pItem.color);
+        this.pPaddleMesh = this.graphics.createPaddle(pItem.color, true);
         this.pPaddleMesh.position.z = this.physics.p1.z;
         
-        this.aiPaddleMesh = this.graphics.createPaddle(levelData.color); // Enemy Color
+        this.aiPaddleMesh = this.graphics.createPaddle(levelData.color, false);
         this.aiPaddleMesh.position.z = this.physics.p2.z;
         
         this.ballMesh = this.graphics.createBall(bItem.color);
         
+        // 4. UI Transition
         this.ui.show('game');
         this.ui.updateHUD(0, 0);
         this.ui.showMatchMessage('READY');
         
-        setTimeout(() => this.ui.showMatchMessage('GO!'), 1500);
+        setTimeout(() => this.ui.showMatchMessage('ENGAGE'), 1500);
     }
 
     loop(timestamp) {
@@ -161,48 +183,47 @@ class Game {
         this.lastTime = timestamp;
 
         if (this.state.matchActive && dt < 0.1) {
-            // Update AI
+            // AI Logic
             const aiSpeed = this.currentLevel.speed;
             const targetX = this.physics.ball.x;
-            // Simple reaction delay simulation using Lerp
             this.physics.p2.x += (targetX - this.physics.p2.x) * aiSpeed;
-            // Clamp
-            this.physics.p2.x = Math.max(Math.min(this.physics.p2.x, 9), -9);
+            this.physics.p2.x = Math.max(Math.min(this.physics.p2.x, 10), -10);
             this.aiPaddleMesh.position.x = this.physics.p2.x;
 
-            // Physics Step
+            // Physics Update
             const result = this.physics.update(dt);
             
             // Sync Visuals
             this.ballMesh.position.x = this.physics.ball.x;
             this.ballMesh.position.z = this.physics.ball.z;
-            // Add simple rotation
             this.ballMesh.rotation.x += this.physics.ball.vz;
             this.ballMesh.rotation.z -= this.physics.ball.vx;
 
-            // Handle Events
+            // Collision Effects
             if (result) {
                 if (result === 'wall') {
                     this.audio.playWall();
                     this.graphics.shakeCamera(0.2);
                 } else if (result === 'p1' || result === 'p2') {
                     this.audio.playHit();
-                    this.graphics.spawnParticles(this.ballMesh.position, result === 'p1' ? 0xffaa00 : 0xff0055);
-                    this.graphics.shakeCamera(0.5);
+                    this.graphics.spawnImpact(this.ballMesh.position, result === 'p1' ? 0x00f2ff : 0xff0055);
+                    this.graphics.shakeCamera(0.6);
+                    if (navigator.vibrate) navigator.vibrate(20); // Haptics
                 } else if (result.startsWith('score')) {
-                    const isPlayer = result === 'score_p2'; // Ball went past P2 (Top) -> Player Scored? No, Wait.
-                    // Physics: Z > fieldH/2 is Top (Enemy side). So if ball > Top, Player Scored.
+                    const isPlayer = result === 'score_p2'; // Top side check
                     
                     if (isPlayer) this.pScore++; else this.eScore++;
                     
                     this.audio.playScore(isPlayer);
-                    this.ui.showMatchMessage(isPlayer ? 'SCORE!' : 'MISS!');
+                    this.ui.showMatchMessage(isPlayer ? 'GOAL!' : 'BREACH!');
                     this.ui.updateHUD(this.pScore, this.eScore);
+                    this.graphics.shakeCamera(1.0);
+                    if (navigator.vibrate) navigator.vibrate(50);
                     
                     if (this.pScore >= 5 || this.eScore >= 5) {
                         this.endMatch(this.pScore >= 5);
                     } else {
-                        this.physics.resetBall(0.3 + (this.pScore+this.eScore)*0.02);
+                        this.physics.resetBall(0.4 + (this.pScore+this.eScore)*0.03);
                     }
                 }
             }
@@ -230,7 +251,6 @@ class Game {
                 xpEl.innerText = "+" + reward.xp;
                 crEl.innerText = "+" + reward.cr;
                 
-                // Update State
                 this.state.xp += reward.xp;
                 this.state.credits += reward.cr;
                 if (this.currentLevel.id > this.state.campaignProgress) {
@@ -263,5 +283,4 @@ class Game {
     }
 }
 
-// Start
 window.game = new Game();
